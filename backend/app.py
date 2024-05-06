@@ -3,6 +3,8 @@ from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 from ultralytics import YOLO
 from flask_socketio import SocketIO, emit
+import time
+
 
 class Alert:
     def __init__(self, area_name, alert_message):
@@ -35,6 +37,9 @@ def predict(chosen_model, img, classes=[]):
     results = chosen_model.predict(img, classes=classes, conf=CONFIDENCE_THRESHOLD)
     return results
 
+# Global dictionary to track alert statuses for each video (this ensures only the first alert is sent)
+alert_sent = {}
+
 def predict_and_detect(video_path, chosen_model, img, classes=[0]):
     resized_img = cv2.resize(img, (640, 480))
     results = predict(chosen_model, resized_img, classes)
@@ -55,13 +60,16 @@ def predict_and_detect(video_path, chosen_model, img, classes=[0]):
                         (x1, y1 - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), TEXT_THICKNESS)
 
-    if person_count > 20:
+    # Check if an alert has already been sent for this video
+    if person_count > 20 and not alert_sent.get(video_path, False):
         alert_message = f"High density detected: {person_count} people."
         alerts.append(Alert(video_path, alert_message))
         socketio.emit('new_alert', {'area_name': video_path, 'alert_message': alert_message}, include_self=True)
+        alert_sent[video_path] = True  # Set the flag to True after sending the alert
 
     _, buffer = cv2.imencode('.jpg', img)
     return buffer.tobytes()
+
 
 @app.route('/process_video', methods=['GET', 'POST'])
 def handle_process_video():
@@ -73,13 +81,19 @@ def handle_process_video():
     cap = cv2.VideoCapture(video_path)
 
     def generate():
+        frame_rate = 5  # frames per second
+        prev = 0
         while True:
+            time_elapsed = time.time() - prev
             ret, frame = cap.read()
             if not ret:
                 break
-            processed_frame = predict_and_detect(video_path, model, frame, classes=[0])
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + processed_frame + b'\r\n')
+            if time_elapsed > 1./frame_rate:
+                prev = time.time()
+                processed_frame = predict_and_detect(video_path, model, frame, classes=[0])
+                yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + processed_frame + b'\r\n')
+
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
