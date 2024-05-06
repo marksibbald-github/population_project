@@ -2,9 +2,14 @@ import cv2
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 from ultralytics import YOLO
-import logging
+from flask_socketio import SocketIO, emit
 
-logging.basicConfig(level=logging.DEBUG)
+class Alert:
+    def __init__(self, area_name, alert_message):
+        self.area_name = area_name
+        self.alert_message = alert_message
+
+alerts = []
 
 
 CONFIDENCE_THRESHOLD = 0.1
@@ -13,23 +18,32 @@ TEXT_THICKNESS = 1
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
+
 
 model = YOLO('yolov9c.pt')
 
-@app.before_request
-def before_request():
-    logging.debug("Request Headers: %s", request.headers)
-    logging.debug("Request Body: %s", request.get_data())
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
 
 def predict(chosen_model, img, classes=[]):       
     results = chosen_model.predict(img, classes=classes, conf=CONFIDENCE_THRESHOLD)
     return results
 
-def predict_and_detect(chosen_model, img, classes=[]):
-    resized_img = cv2.resize(img, (640, 480)) 
+def predict_and_detect(video_path, chosen_model, img, classes=[0]):
+    resized_img = cv2.resize(img, (640, 480))
     results = predict(chosen_model, resized_img, classes)
+    person_count = 0
+
     for result in results:
         for box in result.boxes:
+            if result.names[int(box.cls[0])] == 'person':
+                person_count += 1
             scale_width = img.shape[1] / 640
             scale_height = img.shape[0] / 480
             x1 = int(box.xyxy[0][0] * scale_width)
@@ -40,6 +54,12 @@ def predict_and_detect(chosen_model, img, classes=[]):
             cv2.putText(img, f"{result.names[int(box.cls[0])]}",
                         (x1, y1 - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), TEXT_THICKNESS)
+
+    if person_count > 20:
+        alert_message = f"High density detected: {person_count} people."
+        alerts.append(Alert(video_path, alert_message))
+        socketio.emit('new_alert', {'area_name': video_path, 'alert_message': alert_message}, include_self=True)
+
     _, buffer = cv2.imencode('.jpg', img)
     return buffer.tobytes()
 
@@ -57,7 +77,7 @@ def handle_process_video():
             ret, frame = cap.read()
             if not ret:
                 break
-            processed_frame = predict_and_detect(model, frame, classes=[0])
+            processed_frame = predict_and_detect(video_path, model, frame, classes=[0])
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + processed_frame + b'\r\n')
 
@@ -69,4 +89,4 @@ def get_stream_url():
     return jsonify({'streamUrl': 'http://127.0.0.1:5000/process_video'})
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    socketio.run(app, debug=True, port=5000)
