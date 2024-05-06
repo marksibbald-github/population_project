@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { Button, Input, Segment } from "semantic-ui-react";
 
@@ -7,23 +7,19 @@ function App() {
   const [streamUrl, setStreamUrl] = useState("");
   const [streaming, setStreaming] = useState(false);
 
-  useEffect(() => {
-    async function fetchStreamUrl() {
-      try {
-        const response = await axios.get(
-          "http://127.0.0.1:5000/get_stream_url"
-        );
-        setStreamUrl(response.data.streamUrl);
-      } catch (error) {
-        console.error("Error fetching stream URL:", error);
-      }
+  const fetchStreamUrl = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:5000/get_stream_url");
+      setStreamUrl(response.data.streamUrl);
+      setStreaming(true);
+    } catch (error) {
+      console.error("Error fetching stream URL:", error);
+      setStreaming(false);
     }
+  };
 
+  const handleProcessVideo = () => {
     fetchStreamUrl();
-  }, []);
-
-  const handleProcessVideo = async () => {
-    setStreaming(true); // Assume streaming starts successfully
   };
 
   return (

@@ -2,15 +2,24 @@ import cv2
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 from ultralytics import YOLO
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 CONFIDENCE_THRESHOLD = 0.1
 RECTANGLE_THICKNESS = 2
 TEXT_THICKNESS = 1
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 model = YOLO('yolov9c.pt')
+
+@app.before_request
+def before_request():
+    logging.debug("Request Headers: %s", request.headers)
+    logging.debug("Request Body: %s", request.get_data())
 
 def predict(chosen_model, img, classes=[]):       
     results = chosen_model.predict(img, classes=classes, conf=CONFIDENCE_THRESHOLD)
