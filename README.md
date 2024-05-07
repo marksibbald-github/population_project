@@ -9,11 +9,12 @@
 
 ## To run
 - Clone the repo
+Backend:
 - CD into backend and create a python venv 'Python3 -m venv venv'
 - Activate the venv with 'source venv/bin/activate'
 - Within this venv run 'pip install -r requirements.txt' to download the required files
 - Start the server with 'flask run'
-
+Frontend:
 - For the front end, in another terminal window cd into the 'frontend', and run npm install, followed by npm start.
 
 - With both of these running, the app should start.
