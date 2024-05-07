@@ -119,7 +119,10 @@ function App() {
           onOpen={fetchVideoList}
         />
       </Segment>
-      <Segment style={{ display: "flex", alignItems: "center" }}>
+      <Segment
+        style={{ display: "flex", alignItems: "flex-start", height: "360px" }}
+      >
+        {" "}
         <div style={{ flex: "2" }}>
           <VideoDisplay
             selectedArea={selectedArea}
@@ -127,16 +130,28 @@ function App() {
             videoPath={videoPath}
           />
         </div>
-        <div style={{ flex: "1", marginLeft: "20px" }}>
-          <ThresholdControl
-            threshold={threshold}
-            onThresholdChange={handleThresholdChange}
-          />
-          <AlertsDisplay
-            selectedArea={selectedArea}
-            alerts={alerts}
-            videoPath={videoPath}
-          />
+        <div
+          style={{
+            flex: "1",
+            marginLeft: "20px",
+            display: "flex",
+            flexDirection: "column",
+            height: "300px",
+          }}
+        >
+          <div style={{ flex: "1", marginBottom: "20px" }}>
+            <ThresholdControl
+              threshold={threshold}
+              onThresholdChange={handleThresholdChange}
+            />
+          </div>
+          <div style={{ flex: "2" }}>
+            <AlertsDisplay
+              selectedArea={selectedArea}
+              alerts={alerts}
+              videoPath={videoPath}
+            />
+          </div>
         </div>
       </Segment>
     </div>

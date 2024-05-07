@@ -13,7 +13,7 @@ function ThresholdControl({ threshold, onThresholdChange }) {
         className="slider"
         style={{
           width: "100%",
-          background: "#2f2d83",
+          background: "#efe523",
           marginBottom: "30px",
         }}
       />

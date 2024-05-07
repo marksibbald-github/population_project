@@ -13,9 +13,11 @@ body {
   max-width: 960px;
   margin: 0 auto; /* Center the app horizontally */
   padding: 20px;
+  margin-top: 40px;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* subtle shadow for the app container */
+  height: 477.9px;
 }
 
 .segment {
@@ -46,7 +48,7 @@ body {
   appearance: none;
   width: 20px;
   height: 20px;
-  background: #2f2d83;
+  background: #efe523;
   cursor: pointer;
   margin-top: -6px;
   border-radius: 50%;
@@ -55,7 +57,7 @@ body {
 .slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  background: #2f2d83;
+  background: #efe523;
   cursor: pointer;
   border-radius: 50%;
 }
@@ -63,14 +65,14 @@ body {
 .slider::-webkit-slider-runnable-track {
   width: 100%;
   height: 8px;
-  background: #2f2d83;
+  background: #efe523;
   border-radius: 4px;
 }
 
 .slider::-moz-range-track {
   width: 100%;
   height: 8px;
-  background: #2f2d83;
+  background: #efe523;
   border-radius: 4px;
 }
 

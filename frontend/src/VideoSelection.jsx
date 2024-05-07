@@ -28,7 +28,7 @@ function VideoSelection({
         onClick={onProcessVideo}
         primary
         style={{
-          backgroundColor: "#1fa5de",
+          backgroundColor: "#2f2d83",
           width: "130px",
         }}
       >

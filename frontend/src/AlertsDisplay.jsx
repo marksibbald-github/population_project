@@ -3,24 +3,38 @@ import { Segment, Icon } from "semantic-ui-react";
 
 function AlertsDisplay({ alerts, videoPath, selectedArea }) {
   return (
-    <Segment>
-      {alerts
-        .filter((alert) => alert.video_path === videoPath)
-        .map((alert, index) => (
-          <div key={index} style={{ marginBottom: "10px" }}>
-            <h3 style={{ marginTop: 0, marginBottom: "10px" }}>
-              {selectedArea}
-            </h3>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <Icon
-                name="warning circle"
-                color="red"
-                style={{ marginRight: "10px" }}
-              />
-              <p style={{ margin: 0 }}>{alert.alert_message}</p>
+    <Segment style={{ height: "190px", overflowY: "auto" }}>
+      <h3>{selectedArea ? selectedArea : "Alerts Dialog"}</h3>
+      {alerts.filter((alert) => alert.video_path === videoPath).length > 0 ? (
+        alerts
+          .filter((alert) => alert.video_path === videoPath)
+          .map((alert, index) => (
+            <div key={index} style={{ marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <Icon
+                  name="warning circle"
+                  color="red"
+                  style={{ marginRight: "10px" }}
+                />
+                <p style={{ margin: 0 }}>{alert.alert_message}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+      ) : (
+        <div
+          style={{ display: "flex", alignItems: "center", marginTop: "20px" }}
+        >
+          <Icon
+            name="info circle"
+            color="blue"
+            style={{ marginRight: "10px" }}
+          />
+          <p>
+            Alerts will show here if the video shows more than your specified
+            amount above.
+          </p>
+        </div>
+      )}
     </Segment>
   );
 }
