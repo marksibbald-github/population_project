@@ -20,7 +20,7 @@ alert_threshold = 20
 model = YOLO('yolov9c.pt')
 
 # Constants
-CONFIDENCE_THRESHOLD = 0.1
+CONFIDENCE_THRESHOLD = 0.2
 RECTANGLE_THICKNESS = 2
 TEXT_THICKNESS = 1
 
