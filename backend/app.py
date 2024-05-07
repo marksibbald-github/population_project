@@ -7,26 +7,27 @@ import time
 import os
 import json
 
+# Class for Alerts
 class Alert:
     def __init__(self, video_path, alert_message):
         self.video_path = video_path
         self.alert_message = alert_message
 
+# Global variables 
 alerts = []
+alert_sent = {}
+alert_threshold = 20
+model = YOLO('yolov9c.pt')
 
-
+# Constants
 CONFIDENCE_THRESHOLD = 0.1
 RECTANGLE_THICKNESS = 2
 TEXT_THICKNESS = 1
 
+
 app = Flask(__name__)
-# alter everythign after 3000 to fix cors issues
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True, allow_headers=[
-    "Content-Type", "Authorization", "X-Requested-With"])
+CORS(app, resources={r"*": {"origins": "*"}}, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*") 
-
-
-model = YOLO('yolov9c.pt')
 
 video_metadata_path = os.path.join(app.root_path, 'video_metadata.json')
 with open(video_metadata_path, 'r') as file:
@@ -38,14 +39,14 @@ def get_video_area(file_name):
             return video['area']
     return "Unknown area"
 
-alert_threshold = 20
 
+# Routes
 @app.route('/update_threshold', methods=['POST'])
-@cross_origin
+@cross_origin()
 def update_threshold():
     global alert_threshold
     data = request.get_json()
-    alert_threshold = data.get('threshold', 20) 
+    alert_threshold = int(data.get('threshold', 20)) 
     return jsonify({"status": "Threshold set to {}".format(alert_threshold)})
 
 @app.route('/reset_alerts', methods=['POST'])
@@ -54,14 +55,52 @@ def reset_alerts():
     return jsonify({"status": "All alert states have been reset"})
 
 @app.route('/list_videos', methods=['GET'])
-@cross_origin() 
+@cross_origin()
 def list_videos():
     json_path = os.path.join(app.root_path, 'video_metadata.json')
     with open(json_path, 'r') as file:
         videos = json.load(file)
     return jsonify(videos)
 
+@app.route('/process_video', methods=['GET', 'POST'])
+def handle_process_video():
+    global alert_threshold
 
+    if request.method == 'GET':
+        video_path = request.args.get('videoPath')
+    else:
+        video_path = request.json.get('videoPath')
+
+    cap = cv2.VideoCapture(video_path)
+
+    def generate_frames():
+        frame_rate = 5  # frames per second
+        prev = 0
+        while True:
+            time_elapsed = time.time() - prev
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if time_elapsed > 1./frame_rate:
+                prev = time.time()
+                yield frame
+
+    def process_frames(frames):
+        for frame in frames:
+            processed_frame = predict_and_detect(video_path, model, alert_threshold, frame, classes=[0])
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + processed_frame + b'\r\n')
+
+    return Response(process_frames(generate_frames()), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+
+@app.route('/get_stream_url', methods=['GET'])
+def get_stream_url():
+    return jsonify({'streamUrl': 'http://127.0.0.1:5000/process_video'})
+
+
+# Socket debug
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
@@ -70,14 +109,14 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+# Predicting functions
 def predict(chosen_model, img, classes=[]):       
     results = chosen_model.predict(img, classes=classes, conf=CONFIDENCE_THRESHOLD)
     return results
 
-# Global dictionary to track alert statuses for each video (this ensures only the first alert is sent)
-alert_sent = {}
 
-def predict_and_detect(video_path, chosen_model, img, classes=[0]):
+
+def predict_and_detect(video_path, chosen_model, alert_threshold, img, classes=[0]):
     resized_img = cv2.resize(img, (640, 480))
     results = predict(chosen_model, resized_img, classes)
     person_count = 0
@@ -97,8 +136,7 @@ def predict_and_detect(video_path, chosen_model, img, classes=[0]):
                         (x1, y1 - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), TEXT_THICKNESS)
 
-    # Check if an alert has already been sent for this video
-    if person_count > 20 and not alert_sent.get(video_path, False):
+    if person_count > alert_threshold and not alert_sent.get(video_path, False):
         alert_message = f"High density detected: {person_count} people."
         alerts.append(Alert(video_path, alert_message))
         socketio.emit('new_alert', {'video_path': video_path, 'alert_message': alert_message}, include_self=True)
@@ -108,37 +146,6 @@ def predict_and_detect(video_path, chosen_model, img, classes=[0]):
     return buffer.tobytes()
 
 
-@app.route('/process_video', methods=['GET', 'POST'])
-def handle_process_video():
-    if request.method == 'GET':
-        video_path = request.args.get('videoPath')
-    else:
-        video_path = request.json.get('videoPath')
-
-    cap = cv2.VideoCapture(video_path)
-
-    @stream_with_context
-    def generate():
-        frame_rate = 5  # frames per second
-        prev = 0
-        while True:
-            time_elapsed = time.time() - prev
-            ret, frame = cap.read()
-            if not ret:
-                break
-            if time_elapsed > 1./frame_rate:
-                prev = time.time()
-                processed_frame = predict_and_detect(video_path, model, frame, classes=[0])
-                yield (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + processed_frame + b'\r\n')
-
-
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
-@app.route('/get_stream_url', methods=['GET'])
-def get_stream_url():
-    return jsonify({'streamUrl': 'http://127.0.0.1:5000/process_video'})
 
 if __name__ == "__main__":
     socketio.run(app, debug=False, port=5000)

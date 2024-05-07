@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Segment, Dropdown, Slider } from "semantic-ui-react";
+import { Segment } from "semantic-ui-react";
 import "./App.css";
 import io from "socket.io-client";
+import VideoSelection from "./VideoSelection";
+import VideoDisplay from "./VideoDisplay";
+import ThresholdControl from "./ThresholdControl";
+import AlertsDisplay from "./AlertsDisplay";
 
 function App() {
   const [videoPath, setVideoPath] = useState("");
@@ -101,54 +105,27 @@ function App() {
 
   return (
     <div className="App">
-      <Segment className="segment">
-        <Dropdown
-          placeholder="Select Video"
-          fluid
-          selection
-          options={videoOptions}
-          onChange={handleChange}
+      <Segment>
+        <VideoSelection
+          videoOptions={videoOptions}
+          onVideoChange={handleChange}
+          onProcessVideo={handleProcessVideo}
           onOpen={fetchVideoList}
         />
-        <Button onClick={handleProcessVideo} primary>
-          Process Video
-        </Button>
       </Segment>
-      <Segment className="segment">
-        <input
-          type="range"
-          min="0"
-          max="50"
-          value={threshold}
-          onChange={handleThresholdChange}
-          className="slider"
+      <Segment style={{ display: "flex", alignItems: "center" }}>
+        <VideoDisplay
+          selectedArea={selectedArea}
+          streamUrl={streamUrl}
+          videoPath={videoPath}
         />
-        {console.log("THE", threshold)}
-        <div className="slider-value">Threshold: {threshold}</div>
-        <Button onClick={updateThreshold} secondary>
-          Update Threshold
-        </Button>
-      </Segment>
-      <Segment className="segment">
-        <h2>Selected Area: {selectedArea}</h2>
-        {streaming && streamUrl && (
-          <img
-            src={`${streamUrl}?videoPath=${encodeURIComponent(videoPath)}`}
-            alt="Video Stream"
-            style={{ width: "800px" }}
+        <div style={{ flex: 1, marginLeft: "20px" }}>
+          <ThresholdControl
+            threshold={threshold}
+            onThresholdChange={handleThresholdChange}
+            onUpdateThreshold={updateThreshold}
           />
-        )}
-        <div>
-          {alerts.map((alert, index) => (
-            <div key={index}>
-              <p>
-                <strong>Area:</strong> {selectedArea}
-              </p>
-              <p>
-                <strong>Message:</strong> {alert.alert_message}
-              </p>
-            </div>
-          ))}
+          <AlertsDisplay alerts={alerts} videoPath={videoPath} />
         </div>
       </Segment>
     </div>
