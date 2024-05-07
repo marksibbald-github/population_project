@@ -8,8 +8,8 @@ import os
 import json
 
 class Alert:
-    def __init__(self, area_name, alert_message):
-        self.area_name = area_name
+    def __init__(self, video_path, alert_message):
+        self.video_path = video_path
         self.alert_message = alert_message
 
 alerts = []
@@ -20,7 +20,7 @@ RECTANGLE_THICKNESS = 2
 TEXT_THICKNESS = 1
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
 socketio = SocketIO(app, cors_allowed_origins="*") 
 
 
@@ -35,6 +35,11 @@ def get_video_area(file_name):
         if video['file_name'] == file_name:
             return video['area']
     return "Unknown area"
+
+@app.route('/reset_alerts', methods=['POST'])
+def reset_alerts():
+    alert_sent.clear()
+    return jsonify({"status": "All alert states have been reset"})
 
 @app.route('/list_videos', methods=['GET'])
 def list_videos():
@@ -92,7 +97,7 @@ def predict_and_detect(video_path, chosen_model, img, classes=[0]):
     if person_count > 20 and not alert_sent.get(video_path, False):
         alert_message = f"High density detected: {person_count} people."
         alerts.append(Alert(video_path, alert_message))
-        socketio.emit('new_alert', {'area_name': video_path, 'alert_message': alert_message}, include_self=True)
+        socketio.emit('new_alert', {'video_path': video_path, 'alert_message': alert_message}, include_self=True)
         alert_sent[video_path] = True  # Set the flag to True after sending the alert
 
     _, buffer = cv2.imencode('.jpg', img)
@@ -132,4 +137,4 @@ def get_stream_url():
     return jsonify({'streamUrl': 'http://127.0.0.1:5000/process_video'})
 
 if __name__ == "__main__":
-    socketio.run(app, debug=False, port=5000)
+    socketio.run(app, debug=True, port=5000)

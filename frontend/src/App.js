@@ -22,15 +22,6 @@ function App() {
       setAlerts((prevAlerts) => [...prevAlerts, alert]);
     });
 
-    // Fetch list of videos on load
-    axios
-      .get("http://127.0.0.1:5000/list_videos")
-      .then((response) => {
-        console.log("RESPONSE", response);
-        setVideoList(response.data);
-      })
-      .catch((error) => console.error("Error fetching video list:", error));
-
     return () => socket.disconnect();
   }, []);
 
@@ -49,29 +40,52 @@ function App() {
     fetchStreamUrl();
   };
 
+  const fetchVideoList = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:5000/list_videos");
+      console.log("FETCH");
+      setVideoList(response.data);
+    } catch (error) {
+      console.error("Error fetching video list:", error);
+    }
+  };
+
   const videoOptions = videoList.map((video) => ({
     key: video.file_name,
     text: video.name,
     value: video.file_name,
   }));
 
+  const handleResetAlerts = () => {
+    axios
+      .post("http://127.0.0.1:5000/reset_alerts")
+      .then((response) => {
+        console.log(response.data);
+        setAlerts([]);
+      })
+      .catch((error) => console.error("Error resetting all alerts:", error));
+  };
+
   const handleChange = (e, { value }) => {
     const selectedVideo = videoList.find((video) => video.file_name === value);
-    if (selectedVideo) {
+    if (selectedVideo && videoPath !== `videos/${value}`) {
       setVideoPath(`videos/${value}`);
-      setSelectedArea(selectedVideo.area); // Update the area based on the selected video
+      setSelectedArea(selectedVideo.area);
+      handleResetAlerts();
     }
   };
 
   return (
     <div className="App">
       <Segment>
+        {/* handling fetch on dropdown open to try prevent intermitent cors issues */}
         <Dropdown
           placeholder="Select Video"
           fluid
           selection
           options={videoOptions}
           onChange={handleChange}
+          onOpen={fetchVideoList}
         />
         <Button onClick={handleProcessVideo} primary>
           Process Video
@@ -83,20 +97,24 @@ function App() {
           <img
             src={`${streamUrl}?videoPath=${encodeURIComponent(videoPath)}`}
             alt="Video Stream"
-            style={{ width: "400px" }}
+            style={{ width: "800px" }}
           />
         )}
         <div>
-          {alerts.map((alert, index) => (
-            <div key={index}>
-              <p>
-                <strong>Area:</strong> {selectedArea}
-              </p>
-              <p>
-                <strong>Message:</strong> {alert.alert_message}
-              </p>
-            </div>
-          ))}
+          {console.log("AL", alerts)}
+          {console.log("Vid", videoPath)}
+          {alerts
+            .filter((alert) => alert.video_path === videoPath)
+            .map((alert, index) => (
+              <div key={index}>
+                <p>
+                  <strong>Area:</strong> {alert.area_name}
+                </p>
+                <p>
+                  <strong>Message:</strong> {alert.alert_message}
+                </p>
+              </div>
+            ))}
         </div>
       </Segment>
     </div>
