@@ -14,7 +14,7 @@ function VideoDisplay({ streamUrl, videoPath }) {
         <div
           style={{
             width: "100%",
-            height: "244.73px", // Hardcoded to match video A:R, will be more dynamic in production
+            height: "326.32px", // Hardcoded to match video A:R, will be more dynamic in production
             backgroundColor: "grey",
             display: "flex",
             alignItems: "center",

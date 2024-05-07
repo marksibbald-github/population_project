@@ -120,12 +120,14 @@ function App() {
         />
       </Segment>
       <Segment style={{ display: "flex", alignItems: "center" }}>
-        <VideoDisplay
-          selectedArea={selectedArea}
-          streamUrl={streamUrl}
-          videoPath={videoPath}
-        />
-        <div style={{ flex: 1, marginLeft: "20px" }}>
+        <div style={{ flex: "2" }}>
+          <VideoDisplay
+            selectedArea={selectedArea}
+            streamUrl={streamUrl}
+            videoPath={videoPath}
+          />
+        </div>
+        <div style={{ flex: "1", marginLeft: "20px" }}>
           <ThresholdControl
             threshold={threshold}
             onThresholdChange={handleThresholdChange}

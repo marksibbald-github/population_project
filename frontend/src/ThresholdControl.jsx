@@ -19,7 +19,7 @@ function ThresholdControl({ threshold, onThresholdChange }) {
       />
 
       <div>
-        Send alert when there is more than <strong>{threshold}</strong> people
+        Send alert when there are more than <strong>{threshold}</strong> people
       </div>
     </Segment>
   );
