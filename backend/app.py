@@ -1,10 +1,11 @@
 import cv2
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, make_response, stream_with_context
 from flask_cors import CORS
 from ultralytics import YOLO
 from flask_socketio import SocketIO, emit
 import time
-
+import os
+import json
 
 class Alert:
     def __init__(self, area_name, alert_message):
@@ -20,10 +21,37 @@ TEXT_THICKNESS = 1
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
+socketio = SocketIO(app, cors_allowed_origins="*") 
 
 
 model = YOLO('yolov9c.pt')
+
+video_metadata_path = os.path.join(app.root_path, 'video_metadata.json')
+with open(video_metadata_path, 'r') as file:
+    video_metadata = json.load(file)
+
+def get_video_area(file_name):
+    for video in video_metadata:
+        if video['file_name'] == file_name:
+            return video['area']
+    return "Unknown area"
+
+@app.route('/list_videos', methods=['GET'])
+def list_videos():
+    json_path = os.path.join(app.root_path, 'video_metadata.json')
+    
+    with open(json_path, 'r') as file:
+        videos = json.load(file)
+        print('VIDEOS')
+        print(videos)
+    
+    # below 4 lines to test intermitent cors errors
+    response = make_response(jsonify(videos))
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
+
 
 @socketio.on('connect')
 def handle_connect():
@@ -74,12 +102,13 @@ def predict_and_detect(video_path, chosen_model, img, classes=[0]):
 @app.route('/process_video', methods=['GET', 'POST'])
 def handle_process_video():
     if request.method == 'GET':
-        video_path = request.args.get('videoPath', 'busy2.mp4')
+        video_path = request.args.get('videoPath')
     else:
-        video_path = request.json.get('videoPath', 'busy2.mp4')
+        video_path = request.json.get('videoPath')
 
     cap = cv2.VideoCapture(video_path)
 
+    @stream_with_context
     def generate():
         frame_rate = 5  # frames per second
         prev = 0
@@ -103,4 +132,4 @@ def get_stream_url():
     return jsonify({'streamUrl': 'http://127.0.0.1:5000/process_video'})
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=5000)
+    socketio.run(app, debug=False, port=5000)

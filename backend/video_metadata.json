@@ -1,0 +1,12 @@
+[
+    {
+        "file_name": "camera1.mp4",
+        "name": "Camera 1",
+        "area": "Main Enterance"
+    },
+    {
+        "file_name": "camera2.mp4",
+        "name": "Camera 2",
+        "area": "Intersection Main St. & East St."
+    }
+]
