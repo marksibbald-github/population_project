@@ -21,7 +21,7 @@ model = YOLO('yolov9c.pt')
 
 # Constants
 CONFIDENCE_THRESHOLD = 0.2
-RECTANGLE_THICKNESS = 2
+RECTANGLE_THICKNESS = 4
 TEXT_THICKNESS = 1
 
 
@@ -131,7 +131,7 @@ def predict_and_detect(video_path, chosen_model, alert_threshold, img, classes=[
             y1 = int(box.xyxy[0][1] * scale_height)
             x2 = int(box.xyxy[0][2] * scale_width)
             y2 = int(box.xyxy[0][3] * scale_height)
-            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), RECTANGLE_THICKNESS)
+            cv2.rectangle(img, (x1, y1), (x2, y2), (24, 90, 206), RECTANGLE_THICKNESS)
             cv2.putText(img, f"{result.names[int(box.cls[0])]}",
                         (x1, y1 - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), TEXT_THICKNESS)
