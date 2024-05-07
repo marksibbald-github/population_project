@@ -47,21 +47,27 @@ function App() {
   };
 
   const handleThresholdChange = (e) => {
-    const value = e.target.value;
-    setThreshold(value);
+    const newThreshold = e.target.value;
+    setThreshold(newThreshold);
   };
 
-  const updateThreshold = async () => {
-    try {
-      const response = await axios.post(
-        "http://127.0.0.1:5000/update_threshold",
-        { threshold }
-      );
-      console.log("Threshold updated:", response.data);
-    } catch (error) {
-      console.error("Error updating threshold:", error);
+  useEffect(() => {
+    const updateThreshold = async () => {
+      try {
+        const response = await axios.post(
+          "http://127.0.0.1:5000/update_threshold",
+          { threshold }
+        );
+        console.log("Threshold updated:", response.data);
+      } catch (error) {
+        console.error("Error updating threshold:", error);
+      }
+    };
+
+    if (threshold !== "") {
+      updateThreshold();
     }
-  };
+  }, [threshold]);
 
   const fetchVideoList = async () => {
     axios
@@ -123,7 +129,6 @@ function App() {
           <ThresholdControl
             threshold={threshold}
             onThresholdChange={handleThresholdChange}
-            onUpdateThreshold={updateThreshold}
           />
           <AlertsDisplay
             selectedArea={selectedArea}

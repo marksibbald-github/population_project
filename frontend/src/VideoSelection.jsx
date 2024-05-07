@@ -11,7 +11,7 @@ function VideoSelection({
     <div
       style={{
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "space-between",
       }}
     >
@@ -24,8 +24,15 @@ function VideoSelection({
         onOpen={onOpen}
         style={{ marginRight: "10px" }}
       />
-      <Button onClick={onProcessVideo} primary>
-        Process Video
+      <Button
+        onClick={onProcessVideo}
+        primary
+        style={{
+          backgroundColor: "#1fa5de",
+          width: "130px",
+        }}
+      >
+        Scan Video
       </Button>
     </div>
   );

@@ -1,7 +1,7 @@
 import React from "react";
-import { Button, Segment } from "semantic-ui-react";
+import { Button, Segment, Grid } from "semantic-ui-react";
 
-function ThresholdControl({ threshold, onThresholdChange, onUpdateThreshold }) {
+function ThresholdControl({ threshold, onThresholdChange }) {
   return (
     <Segment>
       <input
@@ -11,11 +11,16 @@ function ThresholdControl({ threshold, onThresholdChange, onUpdateThreshold }) {
         value={threshold}
         onChange={onThresholdChange}
         className="slider"
+        style={{
+          width: "100%",
+          background: "#2f2d83",
+          marginBottom: "30px",
+        }}
       />
-      <div className="slider-value">Threshold: {threshold}</div>
-      <Button onClick={onUpdateThreshold} secondary>
-        Update Threshold
-      </Button>
+
+      <div>
+        Send alert when there is more than <strong>{threshold}</strong> people
+      </div>
     </Segment>
   );
 }
