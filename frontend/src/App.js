@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Segment, Dropdown } from "semantic-ui-react";
+import { Button, Segment, Dropdown, Slider } from "semantic-ui-react";
+import "./App.css";
 import io from "socket.io-client";
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
   const [alerts, setAlerts] = useState([]);
   const [videoList, setVideoList] = useState([]);
   const [selectedArea, setSelectedArea] = useState("");
+  const [threshold, setThreshold] = useState(20);
 
   useEffect(() => {
     const socket = io("http://127.0.0.1:5000", {
@@ -40,14 +42,36 @@ function App() {
     fetchStreamUrl();
   };
 
-  const fetchVideoList = async () => {
+  const handleThresholdChange = (e) => {
+    const value = e.target.value;
+    setThreshold(value);
+  };
+
+  const updateThreshold = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/list_videos");
-      console.log("FETCH");
-      setVideoList(response.data);
+      const response = await axios.post(
+        "http://127.0.0.1:5000/update_threshold",
+        { threshold }
+      );
+      console.log("Threshold updated:", response.data);
     } catch (error) {
-      console.error("Error fetching video list:", error);
+      console.error("Error updating threshold:", error);
     }
+  };
+
+  const fetchVideoList = async () => {
+    axios
+      .get("http://127.0.0.1:5000/list_videos", {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
+        setVideoList(response.data);
+      })
+      .catch((error) => console.error("Error fetching video list:", error));
   };
 
   const videoOptions = videoList.map((video) => ({
@@ -77,8 +101,7 @@ function App() {
 
   return (
     <div className="App">
-      <Segment>
-        {/* handling fetch on dropdown open to try prevent intermitent cors issues */}
+      <Segment className="segment">
         <Dropdown
           placeholder="Select Video"
           fluid
@@ -91,7 +114,22 @@ function App() {
           Process Video
         </Button>
       </Segment>
-      <Segment>
+      <Segment className="segment">
+        <input
+          type="range"
+          min="0"
+          max="50"
+          value={threshold}
+          onChange={handleThresholdChange}
+          className="slider"
+        />
+        {console.log("THE", threshold)}
+        <div className="slider-value">Threshold: {threshold}</div>
+        <Button onClick={updateThreshold} secondary>
+          Update Threshold
+        </Button>
+      </Segment>
+      <Segment className="segment">
         <h2>Selected Area: {selectedArea}</h2>
         {streaming && streamUrl && (
           <img
@@ -101,20 +139,16 @@ function App() {
           />
         )}
         <div>
-          {console.log("AL", alerts)}
-          {console.log("Vid", videoPath)}
-          {alerts
-            .filter((alert) => alert.video_path === videoPath)
-            .map((alert, index) => (
-              <div key={index}>
-                <p>
-                  <strong>Area:</strong> {alert.area_name}
-                </p>
-                <p>
-                  <strong>Message:</strong> {alert.alert_message}
-                </p>
-              </div>
-            ))}
+          {alerts.map((alert, index) => (
+            <div key={index}>
+              <p>
+                <strong>Area:</strong> {selectedArea}
+              </p>
+              <p>
+                <strong>Message:</strong> {alert.alert_message}
+              </p>
+            </div>
+          ))}
         </div>
       </Segment>
     </div>

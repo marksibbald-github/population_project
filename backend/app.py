@@ -1,6 +1,6 @@
 import cv2
 from flask import Flask, Response, request, jsonify, make_response, stream_with_context
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from ultralytics import YOLO
 from flask_socketio import SocketIO, emit
 import time
@@ -20,7 +20,9 @@ RECTANGLE_THICKNESS = 2
 TEXT_THICKNESS = 1
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
+# alter everythign after 3000 to fix cors issues
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True, allow_headers=[
+    "Content-Type", "Authorization", "X-Requested-With"])
 socketio = SocketIO(app, cors_allowed_origins="*") 
 
 
@@ -36,26 +38,28 @@ def get_video_area(file_name):
             return video['area']
     return "Unknown area"
 
+alert_threshold = 20
+
+@app.route('/update_threshold', methods=['POST'])
+@cross_origin
+def update_threshold():
+    global alert_threshold
+    data = request.get_json()
+    alert_threshold = data.get('threshold', 20) 
+    return jsonify({"status": "Threshold set to {}".format(alert_threshold)})
+
 @app.route('/reset_alerts', methods=['POST'])
 def reset_alerts():
     alert_sent.clear()
     return jsonify({"status": "All alert states have been reset"})
 
 @app.route('/list_videos', methods=['GET'])
+@cross_origin() 
 def list_videos():
     json_path = os.path.join(app.root_path, 'video_metadata.json')
-    
     with open(json_path, 'r') as file:
         videos = json.load(file)
-        print('VIDEOS')
-        print(videos)
-    
-    # below 4 lines to test intermitent cors errors
-    response = make_response(jsonify(videos))
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    return response
+    return jsonify(videos)
 
 
 @socketio.on('connect')
@@ -137,4 +141,4 @@ def get_stream_url():
     return jsonify({'streamUrl': 'http://127.0.0.1:5000/process_video'})
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=5000)
+    socketio.run(app, debug=False, port=5000)
