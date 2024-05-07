@@ -125,7 +125,11 @@ function App() {
             onThresholdChange={handleThresholdChange}
             onUpdateThreshold={updateThreshold}
           />
-          <AlertsDisplay alerts={alerts} videoPath={videoPath} />
+          <AlertsDisplay
+            selectedArea={selectedArea}
+            alerts={alerts}
+            videoPath={videoPath}
+          />
         </div>
       </Segment>
     </div>
