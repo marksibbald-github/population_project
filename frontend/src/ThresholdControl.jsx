@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Segment, Grid } from "semantic-ui-react";
+import { Segment } from "semantic-ui-react";
 
 function ThresholdControl({ threshold, onThresholdChange }) {
   return (

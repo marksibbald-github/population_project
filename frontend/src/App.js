@@ -11,7 +11,6 @@ import AlertsDisplay from "./AlertsDisplay";
 function App() {
   const [videoPath, setVideoPath] = useState("");
   const [streamUrl, setStreamUrl] = useState("");
-  const [streaming, setStreaming] = useState(false);
   const [alerts, setAlerts] = useState([]);
   const [videoList, setVideoList] = useState([]);
   const [selectedArea, setSelectedArea] = useState("");
@@ -35,10 +34,8 @@ function App() {
     try {
       const response = await axios.get("http://127.0.0.1:5000/get_stream_url");
       setStreamUrl(response.data.streamUrl);
-      setStreaming(true);
     } catch (error) {
       console.error("Error fetching stream URL:", error);
-      setStreaming(false);
     }
   };
 
