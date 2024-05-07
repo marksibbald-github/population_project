@@ -22,4 +22,4 @@
 ## Points worth noting
 - As this is running an ML model, it is resource-heavy, and can result in the video running slowly, this would be fine-tuned in further versions.
 - And as mentioned initially, this is a bit rough in its current state, but I will have it in a better shape for tomorrow's demo. 
-- And finally, apologies for the Python-heavy set-up. If this is something that you do not use frequently/ do not have installed, it may be easier to view this directly in the demo.
+- And finally, apologies for the Python-heavy set-up. If this is something that you do not use frequently/ do not have installed, it may be easier to view this directly in the demo. Having this hosted on the web or run in a container would be a better solution.
